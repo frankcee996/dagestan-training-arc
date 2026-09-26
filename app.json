@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "2-3 Years: Dagestan",
+    "slug": "dagestan-training-arc",
+    "scheme": "dagestan",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/mascot.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#050505",
+    "splash": {
+      "image": "./assets/mascot.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#050505"
+    },
+    "android": {
+      "package": "com.dagestan.trainingarc",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/mascot.png",
+        "backgroundColor": "#050505"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "1c6f78ed-d4a3-4ad0-9e75-9601e26840c8"
+      }
+    }
+  }
+}
