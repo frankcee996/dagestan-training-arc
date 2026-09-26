@@ -1,12 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore } from 'firebase/firestore';
 // @ts-ignore - no types shipped for this subpath
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
-// Fill these from your own Firebase project (Project Settings -> General -> Your apps).
-// Prefer loading via environment variables (e.g. with expo-constants / app.config.ts + .env)
-// rather than committing real values here.
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
@@ -18,7 +15,6 @@ const firebaseConfig = {
 
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// initializeAuth throws if called twice (e.g. fast refresh) — guard it.
 let authInstance;
 try {
   authInstance = initializeAuth(app, {
@@ -29,4 +25,12 @@ try {
 }
 
 export const auth = authInstance;
-export const db = getFirestore(app);
+
+// Firestore's default streaming connection (WebChannel) frequently fails
+// silently on React Native/Android, surfacing as a misleading "client is
+// offline" error even with a working connection. Long-polling is more
+// reliable in this environment.
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  useFetchStreams: false,
+});
