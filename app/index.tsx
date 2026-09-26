@@ -8,7 +8,7 @@ import { colors, spacing } from '../src/theme';
 import { useUser } from '../src/state/UserContext';
 
 export default function WelcomeScreen() {
-  const { firebaseUser, profile, loading } = useUser();
+  const { firebaseUser, profile, loading, isGuest, enterGuestMode } = useUser();
 
   const titleOpacity = useSharedValue(0);
   const buttonOpacity = useSharedValue(0);
@@ -18,18 +18,21 @@ export default function WelcomeScreen() {
     buttonOpacity.value = withDelay(1100, withTiming(1, { duration: 500 }));
   }, []);
 
-  // Auto-route signed-in users straight past the welcome screen.
   useEffect(() => {
     if (loading) return;
+    if (isGuest && profile) {
+      router.replace(profile.onboardingComplete ? '/(tabs)/home' : '/(onboarding)/onboarding');
+      return;
+    }
     if (firebaseUser && profile) {
       router.replace(profile.onboardingComplete ? '/(tabs)/home' : '/(onboarding)/onboarding');
     }
-  }, [loading, firebaseUser, profile]);
+  }, [loading, firebaseUser, profile, isGuest]);
 
   const titleStyle = useAnimatedStyle(() => ({ opacity: titleOpacity.value }));
   const buttonStyle = useAnimatedStyle(() => ({ opacity: buttonOpacity.value }));
 
-  if (loading || firebaseUser) {
+  if (loading || firebaseUser || isGuest) {
     return (
       <View style={styles.container}>
         <ActivityIndicator color={colors.white} />
@@ -47,6 +50,8 @@ export default function WelcomeScreen() {
       </Animated.View>
       <Animated.View style={[styles.buttonBlock, buttonStyle]}>
         <PrimaryButton label="Enter the Training Arc" onPress={() => router.push('/(auth)/login')} />
+        <View style={{ height: spacing.md }} />
+        <PrimaryButton label="Continue as Guest" variant="secondary" onPress={enterGuestMode} />
       </Animated.View>
     </View>
   );
@@ -60,30 +65,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
-  textBlock: {
-    alignItems: 'center',
-    marginTop: spacing.xl,
-  },
-  title: {
-    color: colors.white,
-    fontSize: 30,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  titleAccent: {
-    color: colors.red,
-    fontSize: 30,
-    fontWeight: '800',
-    letterSpacing: 2,
-    marginTop: -4,
-  },
-  tagline: {
-    color: colors.steel,
-    marginTop: spacing.md,
-    fontWeight: '600',
-  },
-  buttonBlock: {
-    width: '100%',
-    marginTop: spacing.xxl,
-  },
+  textBlock: { alignItems: 'center', marginTop: spacing.xl },
+  title: { color: colors.white, fontSize: 30, fontWeight: '800', letterSpacing: 1 },
+  titleAccent: { color: colors.red, fontSize: 30, fontWeight: '800', letterSpacing: 2, marginTop: -4 },
+  tagline: { color: colors.steel, marginTop: spacing.md, fontWeight: '600' },
+  buttonBlock: { width: '100%', marginTop: spacing.xxl },
 });

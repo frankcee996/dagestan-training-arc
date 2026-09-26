@@ -38,7 +38,7 @@ const DAYS_OPTIONS = [3, 4, 5] as const;
 const DURATION_OPTIONS = ['20-30 min', '30-40 min', '40-50 min', '50-60 min'] as const;
 
 export default function OnboardingScreen() {
-  const { firebaseUser, refreshProfile } = useUser();
+  const { firebaseUser, refreshProfile, isGuest, profile, setProfile } = useUser();
   const [stepIndex, setStepIndex] = useState(0);
   const [experience, setExperience] = useState<FitnessExperience | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -56,17 +56,21 @@ export default function OnboardingScreen() {
     setEquipment((prev) => (prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e]));
 
   const finishOnboarding = async () => {
-    if (!firebaseUser) return;
     setSaving(true);
     try {
-      await updateUserProfile(firebaseUser.uid, {
-        fitnessExperience: experience ?? 'beginner',
+      const patch = {
+        fitnessExperience: experience ?? ('beginner' as FitnessExperience),
         goals,
-        equipment: equipment.length ? equipment : ['none'],
+        equipment: equipment.length ? equipment : (['none'] as Equipment[]),
         trainingDaysPerWeek: trainingDays ?? 3,
         onboardingComplete: true,
-      });
-      await refreshProfile();
+      };
+      if (isGuest && profile) {
+        setProfile({ ...profile, ...patch });
+      } else if (firebaseUser) {
+        await updateUserProfile(firebaseUser.uid, patch);
+        await refreshProfile();
+      }
       router.replace('/(tabs)/home');
     } finally {
       setSaving(false);
@@ -159,50 +163,13 @@ function OptionRow({ label, selected, onPress }: { label: string; selected: bool
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.obsidian,
-  },
-  content: {
-    padding: spacing.xl,
-    paddingTop: spacing.xxl,
-  },
-  progress: {
-    color: colors.steel,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: spacing.md,
-  },
-  question: {
-    color: colors.white,
-    fontSize: 22,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    marginBottom: spacing.lg,
-  },
-  option: {
-    borderWidth: 1,
-    borderColor: colors.carbon,
-    backgroundColor: colors.carbon,
-    borderRadius: radii.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  optionSelected: {
-    borderColor: colors.red,
-  },
-  optionText: {
-    color: colors.steel,
-    fontWeight: '600',
-  },
-  optionTextSelected: {
-    color: colors.white,
-  },
-  skip: {
-    color: colors.steel,
-    textAlign: 'center',
-    marginTop: spacing.lg,
-    textDecorationLine: 'underline',
-  },
+  container: { flex: 1, backgroundColor: colors.obsidian },
+  content: { padding: spacing.xl, paddingTop: spacing.xxl },
+  progress: { color: colors.steel, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: spacing.md },
+  question: { color: colors.white, fontSize: 22, fontWeight: '800', textTransform: 'uppercase', marginBottom: spacing.lg },
+  option: { borderWidth: 1, borderColor: colors.carbon, backgroundColor: colors.carbon, borderRadius: radii.md, padding: spacing.md, marginBottom: spacing.sm },
+  optionSelected: { borderColor: colors.red },
+  optionText: { color: colors.steel, fontWeight: '600' },
+  optionTextSelected: { color: colors.white },
+  skip: { color: colors.steel, textAlign: 'center', marginTop: spacing.lg, textDecorationLine: 'underline' },
 });
